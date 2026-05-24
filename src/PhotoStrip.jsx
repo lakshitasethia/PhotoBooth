@@ -24,8 +24,9 @@ const playStripSound = () => {
   playNote(784, now + 0.24, 0.3);  // G5 — held longer, feels like resolution
 };
 
-export default function PhotoStrip({ photos, selectedFilter, selectedTheme = 'plain white', onBack, onRetake }) {
+export default function PhotoStrip({ photos, selectedTheme = 'plain white', onBack, onRetake }) {
   const canvasRef = useRef(null);
+  const twinCanvasRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -340,6 +341,38 @@ export default function PhotoStrip({ photos, selectedFilter, selectedTheme = 'pl
           }
           ctx.putImageData(imageData, 0, 0);
         }
+
+        // 7. Draw the twin canvas side-by-side (identical, no mirroring)
+        const twinCanvas = twinCanvasRef.current;
+        if (twinCanvas) {
+          const twinCtx = twinCanvas.getContext('2d');
+          if (twinCtx) {
+            const getThemeBgColor = (theme) => {
+              if (theme === 'luxury') return '#1A1A1A';
+              if (theme === 'kisses') return '#FFF0F5';
+              if (theme === 'vintage') return '#F5ECD7';
+              return '#FFFFFF';
+            };
+            twinCtx.fillStyle = getThemeBgColor(selectedTheme);
+            twinCtx.fillRect(0, 0, twinCanvas.width, twinCanvas.height);
+            
+            // Draw left strip
+            twinCtx.drawImage(canvas, 0, 0);
+            
+            // Draw right strip (identical, no mirroring)
+            twinCtx.drawImage(canvas, 504, 0);
+
+            // Draw center dashed line
+            twinCtx.strokeStyle = '#AAAAAA';
+            twinCtx.lineWidth = 1;
+            twinCtx.setLineDash([8, 8]);
+            twinCtx.beginPath();
+            twinCtx.moveTo(492, 0);
+            twinCtx.lineTo(492, twinCanvas.height);
+            twinCtx.stroke();
+            twinCtx.setLineDash([]);
+          }
+        }
         
         setLoading(false);
         playStripSound();
@@ -359,8 +392,8 @@ export default function PhotoStrip({ photos, selectedFilter, selectedTheme = 'pl
     };
   }, [photos, selectedTheme]);
 
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
+  const handleDownload = (isTwin = false) => {
+    const canvas = isTwin ? twinCanvasRef.current : canvasRef.current;
     if (!canvas) return;
 
     canvas.toBlob((blob) => {
@@ -368,12 +401,80 @@ export default function PhotoStrip({ photos, selectedFilter, selectedTheme = 'pl
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'photobooth-strip.png';
+      link.download = isTwin ? 'photobooth-strip-twins.png' : 'photobooth-strip.png';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }, 'image/png');
+  };
+
+  const handlePrint = () => {
+    const canvas = twinCanvasRef.current;
+    if (!canvas) return;
+
+    const dataUrl = canvas.toDataURL('image/png');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups to print your photo strip.');
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Photo Strip</title>
+          <style>
+            @page {
+              size: auto;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              background-color: #ffffff;
+            }
+            img {
+              max-width: 100%;
+              max-height: 100vh;
+              object-fit: contain;
+              display: block;
+            }
+            @media print {
+              html, body {
+                width: 100%;
+                height: 100%;
+                background: #ffffff;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100%;
+                page-break-after: always;
+                page-break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${dataUrl}" id="print-image" />
+          <script>
+            const img = document.getElementById('print-image');
+            if (img.complete) {
+              window.print();
+            } else {
+              img.onload = () => {
+                window.print();
+              };
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -386,26 +487,58 @@ export default function PhotoStrip({ photos, selectedFilter, selectedTheme = 'pl
       </header>
 
       <main className="strip-content">
-        <div className="canvas-wrapper">
+        <div className="canvas-wrapper stacked-previews">
           {loading && <div className="canvas-loader">processing your shots...</div>}
-          <canvas
-            ref={canvasRef}
-            width={480}
-            height={1242}
-            className="strip-canvas-preview"
-            style={{ display: loading ? 'none' : 'block' }}
-          />
+          
+          <div className="preview-item single-preview" style={{ display: loading ? 'none' : 'flex' }}>
+            <canvas
+              ref={canvasRef}
+              width={480}
+              height={1242}
+              className="strip-canvas-preview"
+            />
+          </div>
+
+          <div className="preview-item twin-preview" style={{ display: loading ? 'none' : 'flex' }}>
+            <span className="twin-preview-label">cut & share 🪞</span>
+            <canvas
+              ref={twinCanvasRef}
+              width={984}
+              height={1242}
+              className="strip-canvas-preview twin-canvas-preview"
+            />
+          </div>
         </div>
 
         <div className="strip-actions">
-          <button 
-            className="download-btn" 
-            onClick={handleDownload}
-            disabled={loading}
-            aria-label="Download strip as image"
-          >
-            Download Strip 🎞️
-          </button>
+          <div className="action-buttons-group">
+            <button 
+              className="action-btn btn-single" 
+              onClick={() => handleDownload(false)}
+              disabled={loading}
+              aria-label="Download single photo strip"
+            >
+              Download Single 🎞️
+            </button>
+            
+            <button 
+              className="action-btn btn-twins" 
+              onClick={() => handleDownload(true)}
+              disabled={loading}
+              aria-label="Download twin photo strips"
+            >
+              Download Twins ✂️
+            </button>
+
+            <button 
+              className="action-btn btn-print" 
+              onClick={handlePrint}
+              disabled={loading}
+              aria-label="Print twin photo strips"
+            >
+              Print 🖨️
+            </button>
+          </div>
           
           <button 
             className="retake-text-btn" 
