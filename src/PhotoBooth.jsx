@@ -1,5 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './PhotoBooth.css';
+import { playCountdownBeep } from './audio';
+
+const playShutterSound = () => {
+  const audio = new Audio('/shutter.mp3');
+  audio.volume = 0.7;
+  audio.play();
+};
 
 const FILTER_MAP = {
   'none': 'none',
@@ -11,15 +18,42 @@ const FILTER_MAP = {
   'golden hour': 'sepia(0.35) saturate(1.9) brightness(1.1) contrast(1.05)'
 };
 
+const PROMPTS_LIST = [
+  "make your most dramatic face",
+  "pretend you just won an oscar",
+  "you did NOT just see that",
+  "look away. now regret it.",
+  "main character moment 🎬",
+  "act natural. too natural.",
+  "your villain origin story",
+  "smile like your wifi just came back",
+  "caught in 4k 📸",
+  "the audacity. the nerve.",
+  "pretend you're in a music video",
+  "you're so famous right now"
+];
+
+const THEMES = [
+  'plain white',
+  'pink gingham',
+  'luxury',
+  'cherry',
+  'kisses',
+  'vintage'
+];
+
 export default function PhotoBooth({
   selectedFilter,
   setSelectedFilter,
+  selectedTheme,
+  setSelectedTheme,
   onSessionComplete,
   onBack
 }) {
   const videoRef = useRef(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [currentPrompt, setCurrentPrompt] = useState(null);
   const [flash, setFlash] = useState(false);
   const [error, setError] = useState(null);
   const [capturedPhotosCount, setCapturedPhotosCount] = useState(0);
@@ -92,17 +126,28 @@ export default function PhotoBooth({
     setCapturedPhotosCount(0);
     const capturedList = [];
 
+    // Shuffle and pick first 3 prompts for this session
+    const shuffledPrompts = [...PROMPTS_LIST].sort(() => Math.random() - 0.5);
+    const sessionPrompts = shuffledPrompts.slice(0, 3);
+
     try {
       for (let shot = 0; shot < 3; shot++) {
+        // Step 0: Show prompt for 2000ms, then fade out over 300ms (handled by CSS keyframes)
+        setCurrentPrompt(sessionPrompts[shot]);
+        await new Promise(resolve => setTimeout(resolve, 2300));
+        setCurrentPrompt(null);
+
         // Step 1: Countdown 3 -> 2 -> 1
         for (let num = 3; num >= 1; num--) {
           setCountdown(num);
+          playCountdownBeep();
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
         setCountdown(null);
 
         // Step 2: Simulate flash
         setFlash(true);
+        playShutterSound();
         const dataUrl = captureFrame();
         if (dataUrl) {
           capturedList.push(dataUrl);
@@ -126,6 +171,7 @@ export default function PhotoBooth({
       console.error("Capture sequence interrupted:", err);
       setIsCapturing(false);
       setCountdown(null);
+      setCurrentPrompt(null);
       setFlash(false);
     }
   };
@@ -179,6 +225,16 @@ export default function PhotoBooth({
                     <span className="countdown-number">{countdown}</span>
                   </div>
                 )}
+
+                {/* Pose Prompt Overlay */}
+                {currentPrompt && (
+                  <div className="prompt-overlay-container">
+                    <div className="prompt-card">
+                      <div className="prompt-top">POSE PROMPT ✦</div>
+                      <div className="prompt-text">{currentPrompt}</div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -199,6 +255,24 @@ export default function PhotoBooth({
                 >
                   <span className={`filter-preview ${filterName}`} style={{ filter: FILTER_MAP[filterName] }} />
                   <span className="filter-name">{filterName}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <span className="filter-label">PICK YOUR STRIP ✦</span>
+            <div className="filter-grid">
+              {THEMES.map((themeName) => (
+                <button
+                  key={themeName}
+                  className={`filter-option-btn ${selectedTheme === themeName ? 'active' : ''}`}
+                  onClick={() => setSelectedTheme(themeName)}
+                  disabled={isCapturing}
+                  aria-label={`Select ${themeName} theme`}
+                  style={{ justifyContent: 'center' }}
+                >
+                  <span className="filter-name">{themeName}</span>
                 </button>
               ))}
             </div>

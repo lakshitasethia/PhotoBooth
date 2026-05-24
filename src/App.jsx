@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import LandingPage from './LandingPage';
 import PhotoBooth from './PhotoBooth';
 import PhotoStrip from './PhotoStrip';
@@ -7,6 +7,7 @@ function App() {
   const [view, setView] = useState('landing');
   const [photos, setPhotos] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState('none');
+  const [selectedTheme, setSelectedTheme] = useState('plain white');
 
   const handleOpenBooth = () => {
     setView('booth');
@@ -29,6 +30,7 @@ function App() {
     setView('landing');
     setPhotos([]);
     setSelectedFilter('none');
+    setSelectedTheme('plain white');
   };
 
   return (
@@ -40,6 +42,8 @@ function App() {
         <PhotoBooth 
           selectedFilter={selectedFilter}
           setSelectedFilter={setSelectedFilter}
+          selectedTheme={selectedTheme}
+          setSelectedTheme={setSelectedTheme}
           onSessionComplete={handleSessionComplete}
           onBack={handleBackToLanding}
         />
@@ -48,6 +52,7 @@ function App() {
         <PhotoStrip 
           photos={photos}
           selectedFilter={selectedFilter}
+          selectedTheme={selectedTheme}
           onBack={handleBackToLanding}
           onRetake={handleRetake}
         />
