@@ -1,0 +1,198 @@
+.strip-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 2rem 1.5rem;
+  background-color: var(--color-bg);
+}
+
+.strip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 2rem;
+  margin-bottom: 1.5rem;
+  box-sizing: border-box;
+}
+
+.home-btn {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  background: white;
+  border: 2px solid var(--color-dark);
+  padding: 0.5rem 1.2rem;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--color-dark);
+  transition: all 0.2s ease;
+}
+
+.home-btn:hover {
+  background-color: var(--color-yellow);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--color-dark);
+}
+
+.home-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--color-dark);
+}
+
+.strip-title {
+  font-family: var(--font-headline);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 900;
+  font-style: italic;
+  color: var(--color-dark);
+  text-transform: lowercase;
+  margin: 0;
+}
+
+.strip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+}
+
+.canvas-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+.canvas-loader {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  color: var(--color-dark);
+  opacity: 0.7;
+  padding: 4rem 2rem;
+  border: 2px dashed rgba(26, 26, 26, 0.2);
+  border-radius: 12px;
+  background-color: white;
+}
+
+/* Responsive Canvas Preview with Drop Shadow */
+.strip-canvas-preview {
+  width: 300px;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 
+    0 12px 35px rgba(26, 26, 26, 0.12),
+    0 4px 10px rgba(26, 26, 26, 0.06);
+  background-color: #ffffff;
+  animation: stripEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes stripEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px) rotate(-1deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+.strip-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Download button (pink) */
+.download-btn {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  background-color: var(--color-pink);
+  border: 2px solid var(--color-dark);
+  padding: 1rem 2.8rem;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--color-dark);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.download-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 var(--color-dark);
+  background-color: #ff85ae;
+}
+
+.download-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-dark);
+}
+
+.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Retake text button below */
+.retake-text-btn {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+}
+
+.retake-text-btn::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: var(--color-pink);
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.retake-text-btn:hover {
+  color: var(--color-pink);
+}
+
+.retake-text-btn:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.retake-text-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Small devices tweaks */
+@media (max-width: 480px) {
+  .strip-canvas-preview {
+    max-height: 55vh; /* slightly shorter on very small viewports */
+  }
+  .download-btn {
+    padding: 0.8rem 2.2rem;
+    font-size: 1.05rem;
+  }
+}
